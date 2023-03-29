@@ -1,0 +1,9 @@
+.game_area{
+	background-color: red;
+}
+
+.size1{
+	width: 100px;
+	height: 100px;
+	background-color: rgb(38, 0, 255);
+}
