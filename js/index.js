@@ -89,6 +89,7 @@ function app() {
 		))
 }
 
+//START GAMEGROUND CONTENT
 // Gameground component
 function gameground() {
 
@@ -123,6 +124,14 @@ function startButton() {
 	)
 }
 
+//START BOARD CONTENT
+// Board
+function board() {
+	
+}
+
+// END BOARD CONTENT
 
 
+// END GAMEGROUND CONTENT
 
