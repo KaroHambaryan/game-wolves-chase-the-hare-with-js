@@ -1,9 +1,18 @@
-.game_area{
-	background-color: red;
+/* app */
+.app-flexible_centering_w{
+	display: flex;
+	justify-content: center;
 }
 
-.size1{
-	width: 100px;
-	height: 100px;
-	background-color: rgb(38, 0, 255);
+/* gameground */
+.gameground_wrapper{
+	background-color: aqua;
+	width: 600px;
+	height: 600px;
+}
+
+.gameground-flexible_centering_column{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
