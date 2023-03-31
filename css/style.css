@@ -16,3 +16,47 @@
 	flex-direction: column;
 	align-items: center;
 }
+
+/* board */
+.board_wrapper{
+	display: flex;
+	flex-wrap: wrap;
+	background-color: rgb(201, 201, 217);
+	overflow: hidden;
+}
+
+.board_wrapper_position{
+	position: relative;
+}
+
+/* cell */
+.cell_size{
+	width: 40px;
+	height: 40px;
+	background-color: blueviolet;
+	border: 1px solid black;
+}
+
+/* rabbit */
+.rabbit_size{
+	width: 40px;
+	height: 40px;
+	background-image: url('../image/rabbit.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+	position: absolute;
+	display: block;
+}
+
+/* wolves */
+.wolves_size{
+	width: 40px;
+	height: 40px;
+	background-image: url('../image/wolf.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+	position: absolute;
+	left: 40px;
+	transition: all 0.5s ease-out;
+	display: block;
+}

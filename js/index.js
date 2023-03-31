@@ -67,6 +67,10 @@ const addAtributes = curry((x, n = false, v = false, t = false) => {
 
 	return x;
 })
+var bSize = 5;
+const changeBsize = curry((y) => {
+	bSize = y
+})
 
 // ! connecting application to root
 // get root element
@@ -98,7 +102,8 @@ function gameground() {
 		className('gameground_wrapper', 'gameground-flexible_centering_column'),
 		fragments(
 			boardSizeSelecton(),
-			startButton()
+			startButton(),
+			board(),
 		))
 }
 
@@ -106,7 +111,7 @@ function gameground() {
 function boardSizeSelecton() {
 
 	return htmlElement(
-		addAtributes(element('select'), nam('name'), val('boardSizeSelecton')),
+		addAtributes(element('select'), nam('id'), val('boardSize')),
 		null,
 		fragments(
 			addAtributes(element('option'), nam('value'), val(5), txt('5x5')),
@@ -128,10 +133,89 @@ function startButton() {
 // Board
 function board() {
 	
+	const createCells = (size) => {
+		const row = [];
+		for (let i = 0; i < size; i++) {
+			const newRow = [];
+			for (let j = 0; j < size; j++) {
+				newRow.push(0)
+			}
+			row.push(newRow);
+		}
+		return row;
+	}
+
+	const boardSize = createCells(10)
+
+	return htmlElement(
+		element('div'),
+		className('board_wrapper', 'board_wrapper_position'),
+		fragments(
+			...boardSize.map((row) => {
+				return htmlElement(
+					element('div'),
+					null,
+					row.map(() => {
+						return cell()
+					})
+				)
+			}),
+			...participants(),
+		)
+	)
 }
+
+// cell
+function cell() {
+
+	return htmlElement(
+		element('div'),
+		className('cell_size')
+	)
+}
+
+// PARTICIPANTS
+function participants() {
+	return fragments(
+		rabbit(),
+		...logicRenderWolves(),
+	)
+}
+
+// rabbit
+function rabbit() {
+	return htmlElement(
+		element('div'),
+		className('rabbit_size')
+	);
+}
+
+// logicRenderWolves
+function logicRenderWolves() {
+	const wolves = new Array(3).fill(0)
+	return wolves.map(() => {
+		return htmlElement(
+			element('div'),
+			className('wolves_size')
+		);
+	})
+}
+
+
+
+// END PARTICIPANTS
 
 // END BOARD CONTENT
 
 
 // END GAMEGROUND CONTENT
 
+const size = document.getElementById('boardSize');
+size.addEventListener('change', function (e) {
+	e.stopPropagation();
+	changeBsize(+e.target.value)
+	
+	console.log(bSize);
+})
+
+console.log(element("div"));
