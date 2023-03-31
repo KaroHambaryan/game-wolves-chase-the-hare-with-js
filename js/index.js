@@ -121,7 +121,7 @@ function boardSizeSelecton() {
 	)
 }
 
-// StartButton
+// StartButton component
 function startButton() {
 
 	return htmlElement(
@@ -130,7 +130,7 @@ function startButton() {
 }
 
 //START BOARD CONTENT
-// Board
+// Board component
 function board() {
 	
 	const createCells = (size) => {
@@ -165,7 +165,7 @@ function board() {
 	)
 }
 
-// cell
+// cell component
 function cell() {
 
 	return htmlElement(
@@ -174,15 +174,16 @@ function cell() {
 	)
 }
 
-// PARTICIPANTS
+// PARTICIPANTS 
 function participants() {
 	return fragments(
 		rabbit(),
 		...logicRenderWolves(),
+		...logicRenderBarriers(),
 	)
 }
 
-// rabbit
+// rabbit component
 function rabbit() {
 	return htmlElement(
 		element('div'),
@@ -197,7 +198,7 @@ function logicRenderWolves() {
 		return wolf()
 	})
 }
-
+// wolf component
 function wolf() {
 	return htmlElement(
 		element('div'),
@@ -205,6 +206,23 @@ function wolf() {
 	);
 }
 
+// LogicRenderBarriers
+function logicRenderBarriers() {
+	const barriers = new Array(3).fill(0)
+	return barriers.map(() => {
+		return barrier()
+	})
+}
+
+// barrier component
+function barrier() {
+	return htmlElement(
+		element('div'),
+		className('barriers_size')
+	);
+}
+
+// house component
 
 // END PARTICIPANTS
 
