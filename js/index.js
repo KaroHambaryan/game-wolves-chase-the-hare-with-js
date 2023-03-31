@@ -194,13 +194,16 @@ function rabbit() {
 function logicRenderWolves() {
 	const wolves = new Array(3).fill(0)
 	return wolves.map(() => {
-		return htmlElement(
-			element('div'),
-			className('wolves_size')
-		);
+		return wolf()
 	})
 }
 
+function wolf() {
+	return htmlElement(
+		element('div'),
+		className('wolves_size')
+	);
+}
 
 
 // END PARTICIPANTS
