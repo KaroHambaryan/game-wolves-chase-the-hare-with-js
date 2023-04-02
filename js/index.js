@@ -12,231 +12,241 @@ function curry(fn) {
 	};
 }
 
+// compose :: ((y -> z), (x -> y),  ..., (a -> b)) -> a -> z
+const compose = (...fns) => (...args) => fns.reduceRight((res, fn) => [fn.call(null, ...res)], args)[0];
+
 // ! basic building functions
 // get DOM element with id
 const getRoot = x => document.getElementById(x);
 
 // create DOM element
-const element = x => document.createElement(x);
-
-// return value
-const val = v => v;
-
-// return text
-const txt = t => t;
-
-const nam = n => n;
-// render that has just mutation effect
-const render = curry((x, ch) => x.append(ch));
-
-// return classes array
-const className = (...a) => [...a];
+const create = x => document.createElement(x);
 
 // return fragments array
-const fragments = (...a) => [...a];
+const group = (...a) => [...a];
 
-//  in the x element is adding classes and fragments
-const htmlElement = curry((el, cl = false, fr = false) => {
-	if (cl) {
-		el.classList.add(...cl);
-		if (fr) {
-			el.append(...fr)
-			return el;
-		}
-		return el;
-	} else if (fr) {
-		el.append(...fr)
-		return el;
-	}
-	return el;
+// add Attribute
+const addAttribute = curry((n, v) => x => {
+	x.setAttribute(n, v);
+	return x
 });
 
-// add atribut and value
-const addAtributes = curry((x, n = false, v = false, t = false) => {
-	if (x && v && t && n) {
-		x.setAttribute(n, v);
-		x.textContent = t;
-		return x;
-	} else if (x && v && n) {
-		x.setAttribute(n, v);
-		return x;
-	} else if (x && t) {
-		x.textContent = t;
+// add text
+const addText = curry(t => x => {
+	x.textContent = t;
+	return x;
+});
+
+// add Childrens
+const addChild = curry((fr) => x => {
+	if (Array.isArray(fr)) {
+		x.append(...fr);
 		return x;
 	}
-
+	x.append(fr);
 	return x;
 })
-var bSize = 5;
-const changeBsize = curry((y) => {
-	bSize = y
-})
 
+// add Classes
+const addClass = curry((...cl) => x => {
+	x.classList.add(...cl);
+	return x;
+});
+
+// render that has just mutation effect
+const render = curry((x, ch) => Array.isArray(ch) ? x.append(...ch) : x.append(ch));
 // ! connecting application to root
 // get root element
 const root = getRoot('root');
-// render application
-render(root, app())
+render(root, app());
 
-
-
-//! application  
-
-// App component
+//! APLICATION  
+// app component
 function app() {
-
-	return htmlElement(
-		element('div'),
-		className('app-flexible_centering_w'),
-		fragments(
-			gameground()
-		))
+	const elem = compose(addClass('app-flx_cen_wrap'), addChild(gameground()), create);
+	return elem('div')
 }
 
-//START GAMEGROUND CONTENT
+//! GAMEGROUND CONTENT
 // Gameground component
 function gameground() {
-
-	return htmlElement(
-		element('div'),
-		className('gameground_wrapper', 'gameground-flexible_centering_column'),
-		fragments(
-			boardSizeSelecton(),
-			startButton(),
-			board(),
-		))
+	const elem = compose(
+		addClass('ggr_wrap', 'ggr-flx_cen_col'),
+		addChild(
+			group(
+				selectSize(),
+				startButton(),
+				board(),
+				addButtonBolck()
+			)
+		),
+		create
+	);
+	return elem('div')
 }
 
-// BoardSizeSelecton component
-function boardSizeSelecton() {
+// Select Size component
+function selectSize() {
+	const elem = compose(
+		addChild(
+			addOptions()
+		),
+		create
+	);
+	return elem('select')
+}
 
-	return htmlElement(
-		addAtributes(element('select'), nam('id'), val('boardSize')),
-		null,
-		fragments(
-			addAtributes(element('option'), nam('value'), val(5), txt('5x5')),
-			addAtributes(element('option'), nam('value'), val(7), txt('7x7')),
-			addAtributes(element('option'), nam('value'), val(10), txt('10x10')),
-		)
+// Create Option component
+function addOptions() {
+	const e1 = compose(addText('5x5'), addAttribute('value', 5), create)
+	const e2 = compose(addText('7x7'), addAttribute('value', 7), create)
+	const e3 = compose(addText('10x10'), addAttribute('value', 10), create)
+	return group(
+		e1('option'),
+		e2('option'),
+		e3('option')
 	)
 }
 
-// StartButton component
+// Start Button component
 function startButton() {
-
-	return htmlElement(
-		addAtributes(element('button'), null, null, txt('Start'))
-	)
+	const elem = compose(addText('START'), create);
+	return elem('button');
 }
 
-//START BOARD CONTENT
+//! BOARD CONTENT
 // Board component
 function board() {
-	
-	const createCells = (size) => {
-		const row = [];
-		for (let i = 0; i < size; i++) {
-			const newRow = [];
-			for (let j = 0; j < size; j++) {
-				newRow.push(0)
-			}
-			row.push(newRow);
-		}
-		return row;
-	}
-
-	const boardSize = createCells(10)
-
-	return htmlElement(
-		element('div'),
-		className('board_wrapper', 'board_wrapper_position'),
-		fragments(
-			...boardSize.map((row) => {
-				return htmlElement(
-					element('div'),
-					null,
-					row.map(() => {
-						return cell()
-					})
-				)
-			}),
-			...participants(),
-		)
-	)
+	const elem = compose(
+		addClass('bor_wrap', 'bor_wrap_pos'),
+		addChild(
+			group(
+				...createCell(7),
+				...participants()
+			)
+		),
+		create
+	);
+	return elem('div');
 }
 
-// cell component
+// Cell componrnt
 function cell() {
-
-	return htmlElement(
-		element('div'),
-		className('cell_size')
-	)
+	const elem = compose(addClass('cl_sze'), create);
+	return elem('div');
 }
 
-// PARTICIPANTS 
+// Create Cell
+function createCell(s) {
+	const skel = createBoardSkeleton(s);
+	return skel.map((row) => {
+		return cellRow(row)
+	})
+}
+
+//Create Board Skeleton
+function createBoardSkeleton(s) {
+	const r = [];
+	for (let i = 0; i < s; i++) {
+		const nr = [];
+		for (let j = 0; j < s; j++) {
+			nr.push(0)
+		}
+		r.push(nr);
+	}
+	return r;
+}
+
+// Cell Row
+function cellRow(col) {
+	let elem = compose(
+		addChild(
+			cellColumn(col, cell)
+		),
+		create)
+	return elem('div')
+}
+
+// Cell Column
+function cellColumn(a, b) {
+	const column = curry((c, fn) => {
+		let elem = compose(
+			addChild(
+				c.map(() => {
+					return fn();
+				})
+			),
+			create)
+		return elem('div')
+	})
+
+	return column(a, b)
+}
+
+// !BUTTONS CONTENT
+// Buttons component
+function addButtonBolck() {
+	const up = compose(addText('UP'), addAttribute('value', "up"), create);
+	const dw = compose(addText('DW'), addAttribute('value', "down"), create);
+	const lf = compose(addText('LF'), addAttribute('value', "left"), addClass('bt_sze'), create);
+	const ri = compose(addText('RI'), addAttribute('value', "right"), addClass('bt_sze'), create);
+
+	const wr2 = compose(
+		addClass('bt_flx_ver_cen', 'bt_ver_bl_wrap'),
+		addChild(group(up('button'), dw('button'))),
+		create
+	)
+	const wr1 = compose(
+		addClass('bt_wrap', 'bt_flx_hor_cen'),
+		addChild(group(lf('button'), wr2('div'), ri('button'))),
+		create
+	)
+	return wr1('div')
+}
+
+//! PARTICIPANTS 
+// Participants Component
 function participants() {
-	return fragments(
+	return group(
 		rabbit(),
-		...logicRenderWolves(),
-		...logicRenderBarriers(),
+		...logicRender(3, wolf),
+		...logicRender(3, barrier),
+		house()
+
 	)
 }
 
-// rabbit component
+// Rabbit component
 function rabbit() {
-	return htmlElement(
-		element('div'),
-		className('rabbit_size')
-	);
+	const elem = compose(addClass('rbb_sze','part_glob_sze','part_trans'), create);
+	return elem('div');
 }
 
-// logicRenderWolves
-function logicRenderWolves() {
-	const wolves = new Array(3).fill(0)
-	return wolves.map(() => {
-		return wolf()
-	})
-}
-// wolf component
+// Wolf Component
 function wolf() {
-	return htmlElement(
-		element('div'),
-		className('wolves_size')
-	);
+	const elem = compose(addClass('wlf_sze','part_glob_sze','part_trans'), create);
+	return elem('div');
 }
 
-// LogicRenderBarriers
-function logicRenderBarriers() {
-	const barriers = new Array(3).fill(0)
-	return barriers.map(() => {
-		return barrier()
-	})
-}
-
-// barrier component
+// Barrier Component
 function barrier() {
-	return htmlElement(
-		element('div'),
-		className('barriers_size')
-	);
+	const elem = compose(addClass('barr_sze','part_glob_sze','part_trans'), create);
+	return elem('div');
 }
 
-// house component
+// House Component
+function house() {
+	const elem = compose(addClass('hse_sze','part_glob_sze','part_trans'), create);
+	return elem('div');
+}
 
-// END PARTICIPANTS
-
-// END BOARD CONTENT
-
-
-// END GAMEGROUND CONTENT
-
-const size = document.getElementById('boardSize');
-size.addEventListener('change', function (e) {
-	e.stopPropagation();
-	changeBsize(+e.target.value)
-	
-	console.log(bSize);
-})
-
-console.log(element("div"));
+// logic Render
+function logicRender(a, b) {
+	const el = curry((n, fn) => {
+		const ar = new Array(n).fill(0)
+		return ar.map(() => {
+			return fn()
+		})
+	})
+	return el(a, b)
+}

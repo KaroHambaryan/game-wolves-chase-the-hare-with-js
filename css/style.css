@@ -1,75 +1,101 @@
 /* app */
-.app-flexible_centering_w{
+.app-flx_cen_wrap{
 	display: flex;
 	justify-content: center;
 }
 
 /* gameground */
-.gameground_wrapper{
+.ggr_wrap{
 	background-color: aqua;
 	width: 600px;
 	height: 600px;
 }
 
-.gameground-flexible_centering_column{
+.ggr-flx_cen_col{
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
 
 /* board */
-.board_wrapper{
+.bor_wrap{
 	display: flex;
 	flex-wrap: wrap;
 	background-color: rgb(201, 201, 217);
 	overflow: hidden;
 }
 
-.board_wrapper_position{
+.bor_wrap_pos{
 	position: relative;
 }
 
 /* cell */
-.cell_size{
+.cl_sze{
 	width: 40px;
 	height: 40px;
 	background-color: blueviolet;
 	border: 1px solid black;
 }
 
-/* rabbit */
-.rabbit_size{
+
+/* Buttons Block */
+.bt_wrap{
+	display: flex;
+	align-items: end;
+	background-color: black;
+}
+
+.bt_flx_hor_cen{
+	display: flex;
+	flex-wrap: nowrap;
+}
+
+.bt_flx_ver_cen{
+	display: flex;
+	flex-direction: column;
+}
+
+.bt_ver_bl_wrap{
+	background-color: red;
+}
+
+/* Button */
+.bt_sze{
+	width: 30px;
+	height: 20px;
+}
+
+/* !PARTICIPANTS */
+.part_glob_sze{
 	width: 40px;
 	height: 40px;
-	background-image: url('../image/rabbit.png');
-  background-size: cover;
+	background-size: cover;
   background-repeat: no-repeat;
 	position: absolute;
 	display: block;
+}
+.part_trans{
+	transition: all 0.5s ease-out;
+}
+/* rabbit */
+.rbb_sze{
+	background-image: url('../image/rabbit.png');
 }
 
 /* wolves */
-.wolves_size{
-	width: 40px;
-	height: 40px;
+.wlf_sze{
 	background-image: url('../image/wolf.png');
-  background-size: cover;
-  background-repeat: no-repeat;
-	position: absolute;
 	left: 40px;
-	transition: all 0.5s ease-out;
-	display: block;
 }
 
 /* barriers */
-.barriers_size{
-	width: 40px;
-	height: 40px;
+.barr_sze{
 	background-image: url('../image/barrier.png');
-  background-size: cover;
-  background-repeat: no-repeat;
-	position: absolute;
 	left: 80px;
-	transition: all 0.5s ease-out;
-	display: block;
+}
+
+/* house */
+.hse_sze{
+	background-image: url('../image/home.png');
+	left: 120px;
 }
