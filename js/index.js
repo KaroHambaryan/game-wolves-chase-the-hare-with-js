@@ -22,9 +22,6 @@ const getRoot = x => document.getElementById(x);
 // create DOM element
 const create = x => document.createElement(x);
 
-// return fragments array
-const group = (...a) => [...a];
-
 // add Attribute
 const addAttribute = curry((n, v) => x => {
 	x.setAttribute(n, v);
@@ -72,14 +69,12 @@ function app() {
 function gameground() {
 	const elem = compose(
 		addClass('ggr_wrap', 'ggr-flx_cen_col'),
-		addChild(
-			group(
-				selectSize(),
-				startButton(),
-				board(),
-				addButtonBolck()
-			)
-		),
+		addChild([
+			selectSize(),
+			startButton(),
+			board(),
+			buttonBolck()
+		]),
 		create
 	);
 	return elem('div')
@@ -101,11 +96,11 @@ function addOptions() {
 	const e1 = compose(addText('5x5'), addAttribute('value', 5), create)
 	const e2 = compose(addText('7x7'), addAttribute('value', 7), create)
 	const e3 = compose(addText('10x10'), addAttribute('value', 10), create)
-	return group(
+	return [
 		e1('option'),
 		e2('option'),
 		e3('option')
-	)
+	]
 }
 
 // Start Button component
@@ -119,12 +114,10 @@ function startButton() {
 function board() {
 	const elem = compose(
 		addClass('bor_wrap', 'bor_wrap_pos'),
-		addChild(
-			group(
-				...createCell(7),
-				...participants()
-			)
-		),
+		addChild([
+			...createCell(7),
+			...participants()
+		]),
 		create
 	);
 	return elem('div');
@@ -185,7 +178,7 @@ function cellColumn(a, b) {
 
 // !BUTTONS CONTENT
 // Buttons component
-function addButtonBolck() {
+function buttonBolck() {
 	const up = compose(addText('UP'), addAttribute('value', "up"), create);
 	const dw = compose(addText('DW'), addAttribute('value', "down"), create);
 	const lf = compose(addText('LF'), addAttribute('value', "left"), addClass('bt_sze'), create);
@@ -193,12 +186,12 @@ function addButtonBolck() {
 
 	const wr2 = compose(
 		addClass('bt_flx_ver_cen', 'bt_ver_bl_wrap'),
-		addChild(group(up('button'), dw('button'))),
+		addChild([up('button'), dw('button')]),
 		create
 	)
 	const wr1 = compose(
 		addClass('bt_wrap', 'bt_flx_hor_cen'),
-		addChild(group(lf('button'), wr2('div'), ri('button'))),
+		addChild([lf('button'), wr2('div'), ri('button')]),
 		create
 	)
 	return wr1('div')
@@ -207,13 +200,12 @@ function addButtonBolck() {
 //! PARTICIPANTS 
 // Participants Component
 function participants() {
-	return group(
+	return [
 		rabbit(),
 		...logicRender(3, wolf),
 		...logicRender(3, barrier),
 		house()
-
-	)
+	]
 }
 
 // Rabbit component
