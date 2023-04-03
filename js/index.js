@@ -249,44 +249,111 @@ function logicRender(a, b) {
 	})
 	return el(a, b)
 }
+// ----------------------- Dynamic part of the application -----------------
+// ! CREATE GAME STORE
+const store = new Map()
 
+// initial state values
+store.set('rabbit', {});
+store.set('house', {});
+store.set('wolves', {});
+store.set('barriers', {});
+store.set('gameStatus', false);
+store.set('boardSize', 5);
+store.set('randomCoordinates', 5);
 
-const game = document.getElementById('game');
-const select = document.getElementById('select');
+// dispatch for set data
+function dispatch(n, fn) {
+	if (n === 'rabbit') {
 
-game.addEventListener('click', map)
-function map(e) {
-	if (e.target.value === 'start') {
+	} else if (n === 'house') {
 		
-	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
+	} else if (n === 'wolves') {
+		store.set('wolves', wolvesReducer(store.get('wolves'), fn));
+	} else if (n === 'barriers') {
+		
+	} else if (n === 'gameStatus') {
+		
+	} else if (n === 'boardSize') {
+		
+	} else if (n === 'randomCoordinates') {
 		
 	}
-
-	e.stopPropagation();
-
 }
 
-select.addEventListener('change', changeSelect);
-function changeSelect(e) {
-	changeBoard(+e.target.value)
+// ! EVENT DEVELOPMENT BLOCK
+// get game area
+const game = document.getElementById('game');
+
+// get select button
+const select = document.getElementById('select');
+
+//!CAME CLICK LISTENER 
+game.addEventListener('click', map)
+
+// The Map of all the Activities We Need on Click
+function map(e) {
+	if (e.target.value === 'start') {
+
+	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
+		// --------------------------------
+		//changing values 
+		dispatch('wolves',logAction(e.target.value))
+
+		// -------------------------------
+		// changed values
+
+
+		//-------------------------------
+		// rendering new elements
+		console.log(store.get('wolves'));
+	}
 	e.stopPropagation();
 }
 
+// ! SELECT CHANGE LISTENER
+select.addEventListener('change', change);
+
+// All Actions We Need on Change
+function change(e) {
+	changeBoard(+e.target.value);
+	e.stopPropagation();
+}
+
+// FUNCTIONS FOR RENDERING
+// Changing Board size
 function changeBoard(a) {
 	const b = curry((v) => {
 		const bord = document.getElementById('board');
 		while (bord.firstChild) {
 			bord.removeChild(bord.firstChild);
 		}
-		bord.append(...createCell(v),...participants());
+		bord.append(...createCell(v), ...participants());
 	})
 	b(a)
 }
 
-function changeParticipantsDisplay() {
-	
+
+// ! WOLVES REDUCER
+function wolvesReducer(state = {}, action) {
+	if (action.type === "down") {
+
+		return {
+			wolf1: { x: 20, y: 30 }
+		}
+	}
+
+	return state
+}
+//Wolves Action Creators
+function logAction(val) {
+	return {
+		type: val,
+	}
 }
 
-function changeGameStatus() {
-	
+// Getting Wolves Data
+function getWolvesData() {
+	return store.get('wolves');
 }
+
