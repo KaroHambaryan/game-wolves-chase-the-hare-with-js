@@ -52,12 +52,16 @@ const addClass = curry((...cl) => x => {
 
 // render that has just mutation effect
 const render = curry((x, ch) => Array.isArray(ch) ? x.append(...ch) : x.append(ch));
+
 // ! connecting application to root
 // get root element
 const root = getRoot('root');
 render(root, app());
 
-//! APLICATION  
+//! APLICATION
+
+// !GAMESTATUS
+
 // app component
 function app() {
 	const elem = compose(addClass('app-flx_cen_wrap'), addChild(gameground()), create);
@@ -75,6 +79,7 @@ function gameground() {
 			board(),
 			buttonBolck()
 		]),
+		addAttribute('id', 'game'),
 		create
 	);
 	return elem('div')
@@ -86,6 +91,7 @@ function selectSize() {
 		addChild(
 			addOptions()
 		),
+		addAttribute('id', 'select'),
 		create
 	);
 	return elem('select')
@@ -105,7 +111,7 @@ function addOptions() {
 
 // Start Button component
 function startButton() {
-	const elem = compose(addText('START'), create);
+	const elem = compose(addText('START'), addAttribute('value', 'start'), create);
 	return elem('button');
 }
 
@@ -115,9 +121,10 @@ function board() {
 	const elem = compose(
 		addClass('bor_wrap', 'bor_wrap_pos'),
 		addChild([
-			...createCell(7),
+			...createCell(),
 			...participants()
 		]),
+		addAttribute('id', 'board'),
 		create
 	);
 	return elem('div');
@@ -130,7 +137,7 @@ function cell() {
 }
 
 // Create Cell
-function createCell(s) {
+function createCell(s = 5) {
 	const skel = createBoardSkeleton(s);
 	return skel.map((row) => {
 		return cellRow(row)
@@ -210,25 +217,25 @@ function participants() {
 
 // Rabbit component
 function rabbit() {
-	const elem = compose(addClass('rbb_sze','part_glob_sze','part_trans'), create);
+	const elem = compose(addClass('rbb_sze', 'part_glob_sze', 'part_trans'), addAttribute('id', 'rabbit'), create);
 	return elem('div');
 }
 
 // Wolf Component
 function wolf() {
-	const elem = compose(addClass('wlf_sze','part_glob_sze','part_trans'), create);
+	const elem = compose(addClass('wlf_sze', 'part_glob_sze', 'part_trans'), create);
 	return elem('div');
 }
 
 // Barrier Component
 function barrier() {
-	const elem = compose(addClass('barr_sze','part_glob_sze','part_trans'), create);
+	const elem = compose(addClass('barr_sze', 'part_glob_sze', 'part_trans'), create);
 	return elem('div');
 }
 
 // House Component
 function house() {
-	const elem = compose(addClass('hse_sze','part_glob_sze','part_trans'), create);
+	const elem = compose(addClass('hse_sze', 'part_glob_sze', 'part_trans'), create);
 	return elem('div');
 }
 
@@ -241,4 +248,45 @@ function logicRender(a, b) {
 		})
 	})
 	return el(a, b)
+}
+
+
+const game = document.getElementById('game');
+const select = document.getElementById('select');
+
+game.addEventListener('click', map)
+function map(e) {
+	if (e.target.value === 'start') {
+		
+	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
+		
+	}
+
+	e.stopPropagation();
+
+}
+
+select.addEventListener('change', changeSelect);
+function changeSelect(e) {
+	changeBoard(+e.target.value)
+	e.stopPropagation();
+}
+
+function changeBoard(a) {
+	const b = curry((v) => {
+		const bord = document.getElementById('board');
+		while (bord.firstChild) {
+			bord.removeChild(bord.firstChild);
+		}
+		bord.append(...createCell(v),...participants());
+	})
+	b(a)
+}
+
+function changeParticipantsDisplay() {
+	
+}
+
+function changeGameStatus() {
+	
 }
