@@ -361,7 +361,7 @@ const sortCoords = a => {
 
 // Create Random Coordinates
 const createCoords = compose(sortCoords, randomCoords)
-// console.log(createCoords(11,10));
+console.log(createCoords(11,10));
 
 
 
@@ -377,16 +377,21 @@ game.addEventListener('click', mapForAction)
 // The Map of all the Activities We Need on Click
 function mapForAction(e) {
 	if (e.target.value === 'start') {
+		const SIZE = getStoreData('boardSize');
+		const PARTICIPANTS = 11
+		const RANDOM_COORDS = createCoords(PARTICIPANTS, SIZE)
 		// --------------------------------
 		//changing values 
 		changeParticipantsDisplay('d_block');
-
+		dispatch('rabbit',rangomPosition(RANDOM_COORDS));
+	
 		// -------------------------------
 		// changed values
 
 
 		//-------------------------------
 		// rendering new elements
+		newPosition('rabbit');
 
 	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
 		// --------------------------------
@@ -442,34 +447,39 @@ function keepSize(data){
 
 // !RABBIT REDUCER--------------------------
 function rabbitReducer(state = {}, action) {
-	if (action.type === 'up') {
-		return {
-			...state,
-			y: state.y - 1,
-		}
-	} else if (action.type === 'down') {
-		return {
-			...state,
-			y: state.y + 1,
-		}
-	} else if (action.type === 'left') {
-		return {
-			...state,
-			x: state.x - 1,
-		}
-	} else if (action.type === 'right') {
-		return {
-			...state,
-			x: state.x + 1,
-		}
+	const PAYLOAD = action.payload;
+
+	switch (action.type) {
+		case 'random_coords':
+			const [r] = PAYLOAD.data.r
+			console.log(r);
+			return { x: r.x, y: r.y };
+		case 'up':
+			return { ...state, y: state.y - 1 };
+		case 'down':
+			return { ...state, y: state.y + 1 };
+		case 'left':
+			return { ...state, x: state.x - 1 };
+		case 'right':
+			return { ...state, x: state.x + 1 };
+		default:
+			return state;
 	}
-	return state;
 }
 
 // Rabbit Action creators
 function rabbitStep(type, data) {
 	return {
 		type,
+		payload: {
+			data,
+		}
+	}
+}
+
+function rangomPosition(data) {
+	return {
+		type: 'random_coords',
 		payload: {
 			data,
 		}
