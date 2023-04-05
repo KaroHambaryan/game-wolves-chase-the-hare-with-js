@@ -217,7 +217,7 @@ function participants() {
 
 // Rabbit component
 function rabbit() {
-	const elem = compose(addClass('rbb_sze', 'part_glob_sze', 'part_trans'), addAttribute('id', 'rabbit'), create);
+	const elem = compose(addClass('rbb_sze', 'part_glob_sze'), addAttribute('id', 'rabbit'), create);
 	return elem('div');
 }
 
@@ -254,7 +254,7 @@ function logicRender(a, b) {
 const store = new Map()
 
 // initial state values
-store.set('rabbit', {});
+store.set('rabbit', { x: 0, y: 0 });
 store.set('house', {});
 store.set('wolves', {});
 store.set('barriers', {});
@@ -265,19 +265,19 @@ store.set('randomCoordinates', 5);
 // dispatch for set data
 function dispatch(n, fn) {
 	if (n === 'rabbit') {
-
+		store.set('rabbit', rabbitReducer(store.get('rabbit'), fn))
 	} else if (n === 'house') {
-		
+
 	} else if (n === 'wolves') {
 		store.set('wolves', wolvesReducer(store.get('wolves'), fn));
 	} else if (n === 'barriers') {
-		
+
 	} else if (n === 'gameStatus') {
-		
+
 	} else if (n === 'boardSize') {
-		
+
 	} else if (n === 'randomCoordinates') {
-		
+
 	}
 }
 
@@ -298,15 +298,13 @@ function map(e) {
 	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
 		// --------------------------------
 		//changing values 
-		dispatch('wolves',logAction(e.target.value))
-
+		dispatch('rabbit', rabbitStep(e.target.value))
 		// -------------------------------
 		// changed values
-
-
+		rabbitWalk();
 		//-------------------------------
 		// rendering new elements
-		console.log(store.get('wolves'));
+
 	}
 	e.stopPropagation();
 }
@@ -320,7 +318,7 @@ function change(e) {
 	e.stopPropagation();
 }
 
-// FUNCTIONS FOR RENDERING
+// FUNCTIONS FOR RENDERING---------------------------------
 // Changing Board size
 function changeBoard(a) {
 	const b = curry((v) => {
@@ -333,8 +331,69 @@ function changeBoard(a) {
 	b(a)
 }
 
+// Rabbit Walk
+function rabbitWalk() {
+	const rabbit = document.getElementById('rabbit');
+	let r = getRabbitData();
+	console.log(r);
+	const { x, y } = createCSSCoordinates(r.x, r.y);
+	rabbit.style.transform = `translate(${x}px,${y}px)`;
+}
 
-// ! WOLVES REDUCER
+// Create CSS Coordinates
+function createCSSCoordinates(q, r) {
+	const p = curry((a, b) => {
+		const size = 40;
+		return {
+			x: +a * size,
+			y: +b * size
+		}
+	})
+	return p(q, r)
+}
+
+// !RABBIT REDUCER------------------------------------------
+function rabbitReducer(state = {}, action) {
+	if (action.type === 'up') {
+		return {
+			...state,
+			y: state.y - 1,
+		}
+	} else if (action.type === 'down') {
+		return {
+			...state,
+			y: state.y + 1,
+		}
+	} else if (action.type === 'left') {
+		return {
+			...state,
+			x: state.x - 1,
+		}
+	} else if (action.type === 'right') {
+		return {
+			...state,
+			x: state.x + 1,
+		}
+	}
+	return state;
+}
+
+// Getting Rabbit Data
+function getRabbitData() {
+	return store.get('rabbit');
+}
+
+// Rabbit Action creators
+function rabbitStep(type, data) {
+	return {
+		type,
+		payload: {
+			data,
+		}
+	}
+}
+
+// ! WOLVES REDUCER---------------------------------------
 function wolvesReducer(state = {}, action) {
 	if (action.type === "down") {
 
@@ -345,15 +404,15 @@ function wolvesReducer(state = {}, action) {
 
 	return state
 }
-//Wolves Action Creators
-function logAction(val) {
-	return {
-		type: val,
-	}
-}
 
 // Getting Wolves Data
 function getWolvesData() {
 	return store.get('wolves');
 }
 
+//Wolves Action Creators
+function logAction(val) {
+	return {
+		type: val,
+	}
+}
