@@ -17,7 +17,7 @@ const compose = (...fns) => (...args) => fns.reduceRight((res, fn) => [fn.call(n
 
 // ! basic building functions
 // get DOM element with id
-const getRoot = x => document.getElementById(x);
+const getElementWithId = x => document.getElementById(x);
 
 // create DOM element
 const create = x => document.createElement(x);
@@ -55,7 +55,7 @@ const render = curry((x, ch) => Array.isArray(ch) ? x.append(...ch) : x.append(c
 
 // ! connecting application to root
 // get root element
-const root = getRoot('root');
+const root = getElementWithId('root');
 render(root, app());
 
 //! APLICATION
@@ -250,7 +250,7 @@ function logicRender(a, b) {
 	return el(a, b)
 }
 // ----------------------- Dynamic part of the application -----------------
-// ! CREATE GAME STORE
+// ! CREATE GAME STORE--------------------------------------------
 const store = new Map()
 
 // initial state values
@@ -261,6 +261,11 @@ store.set('barriers', {});
 store.set('gameStatus', false);
 store.set('boardSize', 5);
 store.set('randomCoordinates', 5);
+
+// get Store data
+const getStoreData = x => {
+	return store.get(x);
+}
 
 // dispatch for set data
 function dispatch(n, fn) {
@@ -280,6 +285,33 @@ function dispatch(n, fn) {
 
 	}
 }
+//! ----------------------------------------------
+// Create CSS Coordinates
+const convertToCSS = o => {
+	let s = 40;
+	const d = { x: +o.x * s, y: +o.y * s };
+	return d;
+}
+
+//Transform Translate
+const toTranslate = curry((e, d) => {
+	e.style.transform = `translate(${d.x}px, ${d.y}px)`;
+})
+
+//Create New CSS Position
+const newPosition = n => {
+	const data = compose(convertToCSS, getStoreData);
+	toTranslate(getElementWithId(n), data(n))
+}
+
+// Delete All Childes
+const deleteAllChildes = p => {
+	while (p.firstChild) {
+		p.removeChild(p.firstChild);
+	}
+	return p;
+}
+
 
 // ! EVENT DEVELOPMENT BLOCK
 // get game area
@@ -289,10 +321,9 @@ const game = document.getElementById('game');
 const select = document.getElementById('select');
 
 //!CAME CLICK LISTENER 
-game.addEventListener('click', map)
-
+game.addEventListener('click', mapForAction)
 // The Map of all the Activities We Need on Click
-function map(e) {
+function mapForAction(e) {
 	if (e.target.value === 'start') {
 
 	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
@@ -301,55 +332,27 @@ function map(e) {
 		dispatch('rabbit', rabbitStep(e.target.value))
 		// -------------------------------
 		// changed values
-		rabbitWalk();
+
 		//-------------------------------
 		// rendering new elements
-
+		newPosition('rabbit');
 	}
 	e.stopPropagation();
 }
 
 // ! SELECT CHANGE LISTENER
 select.addEventListener('change', change);
-
 // All Actions We Need on Change
 function change(e) {
-	changeBoard(+e.target.value);
+	// --------------------------------
+	//changing values 
+	changeBoard('board', +e.target.value);
+	// -------------------------------
+	// changed values
+
+	//-------------------------------
+	// rendering new elements
 	e.stopPropagation();
-}
-
-// FUNCTIONS FOR RENDERING---------------------------------
-// Changing Board size
-function changeBoard(a) {
-	const b = curry((v) => {
-		const bord = document.getElementById('board');
-		while (bord.firstChild) {
-			bord.removeChild(bord.firstChild);
-		}
-		bord.append(...createCell(v), ...participants());
-	})
-	b(a)
-}
-
-// Rabbit Walk
-function rabbitWalk() {
-	const rabbit = document.getElementById('rabbit');
-	let r = getRabbitData();
-	console.log(r);
-	const { x, y } = createCSSCoordinates(r.x, r.y);
-	rabbit.style.transform = `translate(${x}px,${y}px)`;
-}
-
-// Create CSS Coordinates
-function createCSSCoordinates(q, r) {
-	const p = curry((a, b) => {
-		const size = 40;
-		return {
-			x: +a * size,
-			y: +b * size
-		}
-	})
-	return p(q, r)
 }
 
 // !RABBIT REDUCER------------------------------------------
@@ -378,11 +381,6 @@ function rabbitReducer(state = {}, action) {
 	return state;
 }
 
-// Getting Rabbit Data
-function getRabbitData() {
-	return store.get('rabbit');
-}
-
 // Rabbit Action creators
 function rabbitStep(type, data) {
 	return {
@@ -392,11 +390,14 @@ function rabbitStep(type, data) {
 		}
 	}
 }
+// !---------------------------------------
+// ----- RABBIT FEATURES ----------
+
+
 
 // ! WOLVES REDUCER---------------------------------------
 function wolvesReducer(state = {}, action) {
 	if (action.type === "down") {
-
 		return {
 			wolf1: { x: 20, y: 30 }
 		}
@@ -405,14 +406,31 @@ function wolvesReducer(state = {}, action) {
 	return state
 }
 
-// Getting Wolves Data
-function getWolvesData() {
-	return store.get('wolves');
-}
-
 //Wolves Action Creators
 function logAction(val) {
 	return {
 		type: val,
 	}
 }
+// !--------------------------------------------
+// ----- WOLVES FEATURES ----------
+
+
+//! GENERAL PURPOSE FUNCTIONS FOR RENDERING
+
+// Changing Board size
+function changeBoard(id, s) {
+	const b = curry((id, r) => {
+		const e = compose(
+			addChild([
+				...createCell(r),
+				...participants()
+			]),
+			deleteAllChildes,
+			getElementWithId
+		)
+		e(id);
+	});
+	b(id, s);
+}
+
