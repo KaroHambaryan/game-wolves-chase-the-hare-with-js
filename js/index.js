@@ -19,6 +19,9 @@ const compose = (...fns) => (...args) => fns.reduceRight((res, fn) => [fn.call(n
 // get DOM element with id
 const getElementWithId = x => document.getElementById(x);
 
+// get DOM element with Selector All
+const getElementsWitSelector = x => document.querySelectorAll(x);
+
 // create DOM element
 const create = x => document.createElement(x);
 
@@ -44,9 +47,17 @@ const addChild = curry((fr) => x => {
 	return x;
 })
 
-// add Classes
+// add Class
 const addClass = curry((...cl) => x => {
 	x.classList.add(...cl);
+	return x;
+});
+
+// add Clases
+const addClases = curry((...cl) => x => {
+	for (let i = 0; i < x.length; i++) {
+		x[i].classList.add(...cl);
+	}
 	return x;
 });
 
@@ -235,7 +246,7 @@ function barrier() {
 
 // House Component
 function house() {
-	const elem = compose(addClass('hse_sze', 'part_glob_sze', 'part_trans'), create);
+	const elem = compose(addClass('hse_sze', 'part_glob_sze', 'part_trans'), addAttribute('id', 'house'), create);
 	return elem('div');
 }
 
@@ -258,6 +269,7 @@ store.set('rabbit', { x: 0, y: 0 });
 store.set('house', {});
 store.set('wolves', {});
 store.set('barriers', {});
+
 store.set('gameStatus', false);
 store.set('boardSize', 5);
 store.set('randomCoordinates', 5);
@@ -278,9 +290,9 @@ function dispatch(n, fn) {
 	} else if (n === 'barriers') {
 
 	} else if (n === 'gameStatus') {
-
+		store.set('gameStatus', startButtonReduser(store.get('gameStatus'), fn));
 	} else if (n === 'boardSize') {
-
+		store.set('boardSize', boardSizeReduser(store.get('boardSize'), fn));
 	} else if (n === 'randomCoordinates') {
 
 	}
@@ -312,6 +324,46 @@ const deleteAllChildes = p => {
 	return p;
 }
 
+// create Random Coordinates
+const randomCoords = curry((n, s) => {
+	const a = [];
+	while (a.length < n) {
+		const x = Math.floor(Math.random() * s);
+		const y = Math.floor(Math.random() * s);
+		const rc = { x, y };
+		if (!a.some((rc) => rc.x === x && rc.y === y)) {
+			a.push(rc);
+		}
+	}
+
+	return a;
+});
+
+// Sort Random Coordinates
+const sortCoords = a => {
+	const w = [];
+	const b = [];
+	const r = [];
+	const h = [];
+	a.forEach((e, i) => {
+		if (i <= 4) {
+			w.push(e);
+		} else if (i >= 5 && i <= 8) {
+			b.push(e);
+		} else if (i === 9) {
+			r.push(e)
+		} else if (i === 10) {
+			h.push(e)
+		}
+	})
+	return { w, b, r, h };
+}
+
+// Create Random Coordinates
+const createCoords = compose(sortCoords, randomCoords)
+// console.log(createCoords(11,10));
+
+
 
 // ! EVENT DEVELOPMENT BLOCK
 // get game area
@@ -325,6 +377,16 @@ game.addEventListener('click', mapForAction)
 // The Map of all the Activities We Need on Click
 function mapForAction(e) {
 	if (e.target.value === 'start') {
+		// --------------------------------
+		//changing values 
+		changeParticipantsDisplay('d_block');
+
+		// -------------------------------
+		// changed values
+
+
+		//-------------------------------
+		// rendering new elements
 
 	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
 		// --------------------------------
@@ -346,7 +408,9 @@ select.addEventListener('change', change);
 function change(e) {
 	// --------------------------------
 	//changing values 
+	dispatch('boardSize',keepSize(+e.target.value))
 	changeBoard('board', +e.target.value);
+	changeParticipantsDisplay('d_none');
 	// -------------------------------
 	// changed values
 
@@ -355,7 +419,28 @@ function change(e) {
 	e.stopPropagation();
 }
 
-// !RABBIT REDUCER------------------------------------------
+
+// ! BOARD SIZE ---------------------------
+function boardSizeReduser(state = {}, action) {
+	if (action.type === 'keep_size') {
+		return action.payload.data;
+	}
+	return state;
+}
+
+function keepSize(data){
+	return {
+		type: 'keep_size',
+		payload: {
+			data,
+		}
+	}
+}
+// !---------------------------------------
+
+
+
+// !RABBIT REDUCER--------------------------
 function rabbitReducer(state = {}, action) {
 	if (action.type === 'up') {
 		return {
@@ -416,6 +501,10 @@ function logAction(val) {
 // ----- WOLVES FEATURES ----------
 
 
+
+
+
+
 //! GENERAL PURPOSE FUNCTIONS FOR RENDERING
 
 // Changing Board size
@@ -434,3 +523,13 @@ function changeBoard(id, s) {
 	b(id, s);
 }
 
+function changeParticipantsDisplay(n) {
+	const rabbit = compose(addClass(n), getElementWithId);
+	const house = compose(addClass(n), getElementWithId);
+	const wolves = compose(addClases(n), getElementsWitSelector);
+	const barriers = compose(addClases(n), getElementsWitSelector);
+	rabbit('rabbit');
+	house('house');
+	wolves('.wlf_sze');
+	barriers('.barr_sze');
+}

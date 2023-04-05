@@ -72,7 +72,7 @@
 	background-size: cover;
   background-repeat: no-repeat;
 	position: absolute;
-	display: block;
+	display: none;
 }
 .part_trans{
 	transition: all 0.5s ease-out;
@@ -98,4 +98,12 @@
 .hse_sze{
 	background-image: url('../image/home.png');
 	left: 120px;
+}
+
+.d_none{
+	display: none;
+}
+
+.d_block{
+	display: block;
 }
