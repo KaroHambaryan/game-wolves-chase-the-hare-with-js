@@ -20,7 +20,7 @@ const compose = (...fns) => (...args) => fns.reduceRight((res, fn) => [fn.call(n
 const getElementWithId = x => document.getElementById(x);
 
 // get DOM element with Selector All
-const getElementsWitSelector = x => document.querySelectorAll(x);
+const getElemsWitCLass = x => document.getElementsByClassName(x);
 
 // create DOM element
 const create = x => document.createElement(x);
@@ -45,7 +45,7 @@ const addChild = curry((fr) => x => {
 	}
 	x.append(fr);
 	return x;
-})
+});
 
 // add Class
 const addClass = curry((...cl) => x => {
@@ -133,7 +133,6 @@ function board() {
 		addClass('bor_wrap', 'bor_wrap_pos'),
 		addChild([
 			...createCell(),
-			...participants()
 		]),
 		addAttribute('id', 'board'),
 		create
@@ -217,11 +216,11 @@ function buttonBolck() {
 
 //! PARTICIPANTS 
 // Participants Component
-function participants() {
+function participants(w, b) {
 	return [
 		rabbit(),
-		...logicRender(3, wolf),
-		...logicRender(3, barrier),
+		...logicRender(w, wolf),
+		...logicRender(b, barrier),
 		house()
 	]
 }
@@ -234,13 +233,13 @@ function rabbit() {
 
 // Wolf Component
 function wolf() {
-	const elem = compose(addClass('wlf_sze', 'part_glob_sze', 'part_trans'), create);
+	const elem = compose(addClass('wolves', 'wlf_sze', 'part_glob_sze', 'part_trans'), create);
 	return elem('div');
 }
 
 // Barrier Component
 function barrier() {
-	const elem = compose(addClass('barr_sze', 'part_glob_sze', 'part_trans'), create);
+	const elem = compose(addClass('barriers', 'barr_sze', 'part_glob_sze', 'part_trans'), create);
 	return elem('div');
 }
 
@@ -253,47 +252,51 @@ function house() {
 // logic Render
 function logicRender(a, b) {
 	const el = curry((n, fn) => {
-		const ar = new Array(n).fill(0)
-		return ar.map(() => {
+		return n.map(() => {
 			return fn()
 		})
 	})
 	return el(a, b)
 }
+
 // ----------------------- Dynamic part of the application -----------------
 // ! CREATE GAME STORE--------------------------------------------
-const store = new Map()
+const store = new Map();
 
 // initial state values
-store.set('rabbit', { x: 0, y: 0 });
+store.set('rabbit', {});
 store.set('house', {});
 store.set('wolves', {});
 store.set('barriers', {});
-
-store.set('gameStatus', false);
 store.set('boardSize', 5);
-store.set('randomCoordinates', 5);
+
 
 // get Store data
 const getStoreData = x => {
 	return store.get(x);
-}
+};
 
 // dispatch for set data
 function dispatch(n, fn) {
 	if (n === 'rabbit') {
-		store.set('rabbit', rabbitReducer(store.get('rabbit'), fn))
+
+		store.set('rabbit', rabbitReducer(store.get('rabbit'), fn));
+
 	} else if (n === 'house') {
 
+		store.set('house', houseReducer(store.get('house'), fn));
+
 	} else if (n === 'wolves') {
+
 		store.set('wolves', wolvesReducer(store.get('wolves'), fn));
+
 	} else if (n === 'barriers') {
 
-	} else if (n === 'gameStatus') {
-		store.set('gameStatus', startButtonReduser(store.get('gameStatus'), fn));
+		store.set('barriers', barrierReducer(store.get('barriers'), fn));
+		barrierReducer
 	} else if (n === 'boardSize') {
+
 		store.set('boardSize', boardSizeReduser(store.get('boardSize'), fn));
-	} else if (n === 'randomCoordinates') {
 
 	}
 }
@@ -301,20 +304,35 @@ function dispatch(n, fn) {
 // Create CSS Coordinates
 const convertToCSS = o => {
 	let s = 40;
+	if (Array.isArray(o)) {
+		return o.map((e) => {
+			return { x: +e.x * s, y: +e.y * s }
+		})
+	}
 	const d = { x: +o.x * s, y: +o.y * s };
 	return d;
-}
+};
 
 //Transform Translate
 const toTranslate = curry((e, d) => {
-	e.style.transform = `translate(${d.x}px, ${d.y}px)`;
-})
+	if (e.length) {
+		for (let i = 0; i < e.length; i++) {
+			e[i].style.transform = `translate(${d[i].x}px, ${d[i].y}px)`;
+		}
+	} else {
+		e.style.transform = `translate(${d.x}px, ${d.y}px)`;
+	}
+});
 
 //Create New CSS Position
 const newPosition = n => {
 	const data = compose(convertToCSS, getStoreData);
-	toTranslate(getElementWithId(n), data(n))
-}
+	if (getElemsWitCLass(n).length) {
+		toTranslate(getElemsWitCLass(n), data(n));
+	} else {
+		toTranslate(getElementWithId(n), data(n));
+	}
+};
 
 // Delete All Childes
 const deleteAllChildes = p => {
@@ -322,10 +340,11 @@ const deleteAllChildes = p => {
 		p.removeChild(p.firstChild);
 	}
 	return p;
-}
+};
 
 // create Random Coordinates
-const randomCoords = curry((n, s) => {
+const randomCoords = s => {
+	let n = s + 2
 	const a = [];
 	while (a.length < n) {
 		const x = Math.floor(Math.random() * s);
@@ -335,9 +354,8 @@ const randomCoords = curry((n, s) => {
 			a.push(rc);
 		}
 	}
-
 	return a;
-});
+};
 
 // Sort Random Coordinates
 const sortCoords = a => {
@@ -345,23 +363,32 @@ const sortCoords = a => {
 	const b = [];
 	const r = [];
 	const h = [];
-	a.forEach((e, i) => {
-		if (i <= 4) {
-			w.push(e);
-		} else if (i >= 5 && i <= 8) {
-			b.push(e);
-		} else if (i === 9) {
-			r.push(e)
-		} else if (i === 10) {
-			h.push(e)
+	r.push(a.pop());
+	h.push(a.pop());
+
+	if (a.length === 5) {
+		while (w.length < 3) {
+			w.push(a.pop());
 		}
-	})
+	} else if (a.length === 7) {
+		while (w.length < 4) {
+			w.push(a.pop());
+		}
+	} else if (a.length === 10) {
+		while (w.length < 5) {
+			w.push(a.pop());
+		}
+	}
+
+	while (a.length) {
+		b.push(a.pop());
+	}
 	return { w, b, r, h };
-}
+};
 
 // Create Random Coordinates
-const createCoords = compose(sortCoords, randomCoords)
-console.log(createCoords(11,10));
+const createCoords = compose(sortCoords, randomCoords);
+
 
 
 
@@ -373,26 +400,29 @@ const game = document.getElementById('game');
 const select = document.getElementById('select');
 
 //!CAME CLICK LISTENER 
-game.addEventListener('click', mapForAction)
+game.addEventListener('click', mapForAction);
 // The Map of all the Activities We Need on Click
 function mapForAction(e) {
 	if (e.target.value === 'start') {
 		const SIZE = getStoreData('boardSize');
-		const PARTICIPANTS = 11
-		const RANDOM_COORDS = createCoords(PARTICIPANTS, SIZE)
+		const RANDOM_COORDS = createCoords(SIZE);
 		// --------------------------------
 		//changing values 
-		changeParticipantsDisplay('d_block');
-		dispatch('rabbit',rangomPosition(RANDOM_COORDS));
-	
+		dispatch('rabbit', rangomPosition(RANDOM_COORDS));
+		dispatch('house', rangomPosition(RANDOM_COORDS));
+		dispatch('wolves', rangomPosition(RANDOM_COORDS));
+		dispatch('barriers', rangomPosition(RANDOM_COORDS));
 		// -------------------------------
 		// changed values
 
 
 		//-------------------------------
 		// rendering new elements
+		addParticipants('wolves', 'barriers', SIZE);
 		newPosition('rabbit');
-
+		newPosition('house');
+		newPosition('wolves');
+		newPosition('barriers');
 	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
 		// --------------------------------
 		//changing values 
@@ -407,15 +437,17 @@ function mapForAction(e) {
 	e.stopPropagation();
 }
 
+
+
 // ! SELECT CHANGE LISTENER
 select.addEventListener('change', change);
 // All Actions We Need on Change
 function change(e) {
 	// --------------------------------
 	//changing values 
-	dispatch('boardSize',keepSize(+e.target.value))
+	dispatch('boardSize', keepSize(+e.target.value))
 	changeBoard('board', +e.target.value);
-	changeParticipantsDisplay('d_none');
+	// changeParticipantsDisplay('d_none');
 	// -------------------------------
 	// changed values
 
@@ -423,6 +455,7 @@ function change(e) {
 	// rendering new elements
 	e.stopPropagation();
 }
+
 
 
 // ! BOARD SIZE ---------------------------
@@ -433,7 +466,7 @@ function boardSizeReduser(state = {}, action) {
 	return state;
 }
 
-function keepSize(data){
+function keepSize(data) {
 	return {
 		type: 'keep_size',
 		payload: {
@@ -452,7 +485,6 @@ function rabbitReducer(state = {}, action) {
 	switch (action.type) {
 		case 'random_coords':
 			const [r] = PAYLOAD.data.r
-			console.log(r);
 			return { x: r.x, y: r.y };
 		case 'up':
 			return { ...state, y: state.y - 1 };
@@ -488,19 +520,35 @@ function rangomPosition(data) {
 // !---------------------------------------
 // ----- RABBIT FEATURES ----------
 
+// ! HOUSE REDUCER---------------------------------------
+function houseReducer(state = {}, action) {
+	const PAYLOAD = action.payload;
+	switch (action.type) {
+		case 'random_coords':
+			const [h] = PAYLOAD.data.h
+			return { x: h.x, y: h.y };
+		default:
+			return state
+	}
+}
+//House Action Creators
 
+// !--------------------------------------------
+// ----- HOUSE FEATURES ----------
 
 // ! WOLVES REDUCER---------------------------------------
 function wolvesReducer(state = {}, action) {
-	if (action.type === "down") {
-		return {
-			wolf1: { x: 20, y: 30 }
-		}
+	const PAYLOAD = action.payload;
+	switch (action.type) {
+		case 'random_coords':
+			const w = PAYLOAD.data.w
+			return w.map((e) => {
+				return { x: e.x, y: e.y };
+			})
+		default:
+			return state
 	}
-
-	return state
 }
-
 //Wolves Action Creators
 function logAction(val) {
 	return {
@@ -510,7 +558,23 @@ function logAction(val) {
 // !--------------------------------------------
 // ----- WOLVES FEATURES ----------
 
+// ! BARRIER REDUCER---------------------------------------
+function barrierReducer(state = {}, action) {
+	const PAYLOAD = action.payload;
+	switch (action.type) {
+		case 'random_coords':
+			const b = PAYLOAD.data.b
+			return b.map((e) => {
+				return { x: e.x, y: e.y };
+			})
+		default:
+			return state
+	}
+}
+//Barrier Action Creators
 
+// !--------------------------------------------
+// ----- Barrier FEATURES ----------
 
 
 
@@ -518,28 +582,34 @@ function logAction(val) {
 //! GENERAL PURPOSE FUNCTIONS FOR RENDERING
 
 // Changing Board size
-function changeBoard(id, s) {
-	const b = curry((id, r) => {
+function changeBoard(id, s, c) {
+	const b = curry((id, r, p = []) => {
 		const e = compose(
 			addChild([
 				...createCell(r),
-				...participants()
+				...p
 			]),
 			deleteAllChildes,
 			getElementWithId
 		)
 		e(id);
 	});
-	b(id, s);
+	b(id, s, c);
 }
 
-function changeParticipantsDisplay(n) {
-	const rabbit = compose(addClass(n), getElementWithId);
-	const house = compose(addClass(n), getElementWithId);
-	const wolves = compose(addClases(n), getElementsWitSelector);
-	const barriers = compose(addClases(n), getElementsWitSelector);
-	rabbit('rabbit');
-	house('house');
-	wolves('.wlf_sze');
-	barriers('.barr_sze');
+function addParticipants(wn, bn, s) {
+	const w = getStoreData(wn);
+	const b = getStoreData(bn);
+	changeBoard('board', s, participants(w, b));
 }
+
+// function changeParticipantsDisplay(n) {
+// 	const rabbit = compose(addClass(n), getElementWithId);
+// 	const house = compose(addClass(n), getElementWithId);
+// 	const wolves = compose(addClases(n), getElemsWitCLass);
+// 	const barriers = compose(addClases(n), getElemsWitCLass);
+// 	rabbit('rabbit');
+// 	house('house');
+// 	wolves('wolves');
+// 	barriers('barriers');
+// }
