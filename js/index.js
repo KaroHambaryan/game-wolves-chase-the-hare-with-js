@@ -342,6 +342,8 @@ const deleteAllChildes = p => {
 	return p;
 };
 
+
+// ----- RANDOM COORDINATES FEATURES ----------
 // create Random Coordinates
 const randomCoords = s => {
 	let n = s + 2
@@ -389,6 +391,7 @@ const sortCoords = a => {
 // Create Random Coordinates
 const createCoords = compose(sortCoords, randomCoords);
 
+
 // ----- RABBIT FEATURES ----------
 // Create Feature Step
 const createFeatureStep = curry((r, t) => {
@@ -410,29 +413,37 @@ const createFeatureStep = curry((r, t) => {
 			default:
 				return r;
 		}
-	});
+});
 
-
-// Check Outside The Board or Not
-const ifOutside = r => {
-	const s = getStoreData('boardSize')
-	if (r.x >= s || r.y >= s) {
-		return true
-	} else if (r.x <= -1 || r.y <= -1) {
-		return true
+// Check Outside From The Board or Not and Return Next Position
+const getNextStep = r => {
+	const SIZE = getStoreData('boardSize');
+	if (r.y <= -1) {
+		return { ...r, y: r.y + SIZE};
+	} else if (r.y >= SIZE) {
+		return { ...r, y: r.y - SIZE};
+	}else if (r.x <= -1) {
+		return { ...r, x: r.x + SIZE};
+	} else if (r.x >= SIZE) {
+		return { ...r, x: r.x - SIZE };
 	} else {
-		return false
+		return r;
 	}
 }
 
-// Check on The Barrier or Not
+// Check for Barrier
 const ifBarrier = r => {
 	const b = getStoreData('barriers');
 	return b.some(e => e.x === r.x && e.y === r.y);
 }
 
-// compose Fn for cecking with the Barrier
-const ifOnBarrier = compose(ifBarrier,createFeatureStep)
+// compose Fn for checking for Barrier
+const ifOnBarrier = compose(ifBarrier,getNextStep,createFeatureStep);
+
+// Compose Fn for checking rabbit is outside from board or not 
+// and for creating next step
+const createStep = compose(getNextStep,createFeatureStep)
+
 
 // ! EVENT DEVELOPMENT BLOCK
 // get game area
@@ -473,10 +484,10 @@ function mapForAction(e) {
 		// --------------------------
 		const RABBIT = getStoreData('rabbit');
 		const EVENT = e.target.value;
-		const ifNextStep = ifOnBarrier(RABBIT,EVENT)
+		const аllowStep = ifOnBarrier(RABBIT, EVENT);
 		// --------------------------------
 		//changing values 
-		if (!ifNextStep) {
+		if (!аllowStep) {
 			// changing
 			dispatch('rabbit', rabbitStep(EVENT));
 			// rendering
@@ -543,13 +554,13 @@ function rabbitReducer(state = {}, action) {
 			const [r] = PAYLOAD.data.r
 			return { x: r.x, y: r.y };
 		case 'up':
-			return { ...state, y: state.y - 1 };
+			return createStep(state,TYPE);
 		case 'down':
-			return { ...state, y: state.y + 1 };
+			return createStep(state,TYPE);
 		case 'left':
-			return { ...state, x: state.x - 1 };
+			return createStep(state,TYPE);
 		case 'right':
-			return { ...state, x: state.x + 1 };
+			return createStep(state,TYPE);
 		default:
 			return state;
 	}
@@ -564,9 +575,6 @@ function rabbitStep(type, data) {
 		}
 	}
 }
-
-// Rabbit Action creators
-
 
 // Global Action creators
 function randomPosition(data) {
