@@ -522,6 +522,27 @@ function rangomPosition(data) {
 }
 // !---------------------------------------
 // ----- RABBIT FEATURES ----------
+function theFeatureStep(r, t) {
+	let x = r.x;
+	let y = r.y;
+	switch (t) {
+		case "up":
+			let up = y - 1;
+			return { x, y: up };
+		case "down":
+			let down = y + 1;
+			return { x, y: down };
+		case "left":
+			let left = x - 1;
+			return { x: left, y };
+		case "right":
+			let right = x + 1;
+			return { x: right, y };
+		default:
+			return r;
+	}
+}
+
 
 // ! HOUSE REDUCER---------------------------------------
 function houseReducer(state = {}, action) {
@@ -616,3 +637,4 @@ function addParticipants(wn, bn, s) {
 // 	wolves('wolves');
 // 	barriers('barriers');
 // }
+
