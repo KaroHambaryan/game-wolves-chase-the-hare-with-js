@@ -389,8 +389,50 @@ const sortCoords = a => {
 // Create Random Coordinates
 const createCoords = compose(sortCoords, randomCoords);
 
+// ----- RABBIT FEATURES ----------
+// Create Feature Step
+const createFeatureStep = curry((r, t) => {
+		let x = r.x;
+		let y = r.y;
+		switch (t) {
+			case "up":
+				let up = y - 1;
+				return { x, y: up };
+			case "down":
+				let down = y + 1;
+				return { x, y: down };
+			case "left":
+				let left = x - 1;
+				return { x: left, y };
+			case "right":
+				let right = x + 1;
+				return { x: right, y };
+			default:
+				return r;
+		}
+	});
 
 
+// Check Outside The Board or Not
+const ifOutside = r => {
+	const s = getStoreData('boardSize')
+	if (r.x >= s || r.y >= s) {
+		return true
+	} else if (r.x <= -1 || r.y <= -1) {
+		return true
+	} else {
+		return false
+	}
+}
+
+// Check on The Barrier or Not
+const ifBarrier = r => {
+	const b = getStoreData('barriers');
+	return b.some(e => e.x === r.x && e.y === r.y);
+}
+
+// compose Fn for cecking with the Barrier
+const ifOnBarrier = compose(ifBarrier,createFeatureStep)
 
 // ! EVENT DEVELOPMENT BLOCK
 // get game area
@@ -408,10 +450,10 @@ function mapForAction(e) {
 		const RANDOM_COORDS = createCoords(SIZE);
 		// --------------------------------
 		//changing values 
-		dispatch('rabbit', rangomPosition(RANDOM_COORDS));
-		dispatch('house', rangomPosition(RANDOM_COORDS));
-		dispatch('wolves', rangomPosition(RANDOM_COORDS));
-		dispatch('barriers', rangomPosition(RANDOM_COORDS));
+		dispatch('rabbit', randomPosition(RANDOM_COORDS));
+		dispatch('house', randomPosition(RANDOM_COORDS));
+		dispatch('wolves', randomPosition(RANDOM_COORDS));
+		dispatch('barriers', randomPosition(RANDOM_COORDS));
 		// -------------------------------
 		// changed values
 
@@ -427,15 +469,25 @@ function mapForAction(e) {
 		['left', 'right', 'up', 'down'].includes(e.target.value) &&
 		!!getElementWithId('rabbit')
 	) {
+		// Global Variables
+		// --------------------------
+		const RABBIT = getStoreData('rabbit');
+		const EVENT = e.target.value;
+		const ifNextStep = ifOnBarrier(RABBIT,EVENT)
 		// --------------------------------
 		//changing values 
-		dispatch('rabbit', rabbitStep(e.target.value))
+		if (!ifNextStep) {
+			// changing
+			dispatch('rabbit', rabbitStep(EVENT));
+			// rendering
+			newPosition('rabbit');
+		}
+			
 		// -------------------------------
 		// changed values
 
 		//-------------------------------
 		// rendering new elements
-		newPosition('rabbit');
 	}
 	e.stopPropagation();
 }
@@ -484,8 +536,9 @@ function keepSize(data) {
 // !RABBIT REDUCER--------------------------
 function rabbitReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
+	const TYPE = action.type;
 
-	switch (action.type) {
+	switch (TYPE) {
 		case 'random_coords':
 			const [r] = PAYLOAD.data.r
 			return { x: r.x, y: r.y };
@@ -512,7 +565,11 @@ function rabbitStep(type, data) {
 	}
 }
 
-function rangomPosition(data) {
+// Rabbit Action creators
+
+
+// Global Action creators
+function randomPosition(data) {
 	return {
 		type: 'random_coords',
 		payload: {
@@ -521,37 +578,8 @@ function rangomPosition(data) {
 	}
 }
 // !---------------------------------------
-// ----- RABBIT FEATURES ----------
-function theFeatureStep(r, t) {
-	let x = r.x;
-	let y = r.y;
-	switch (t) {
-		case "up":
-			let up = y - 1;
-			return { x, y: up };
-		case "down":
-			let down = y + 1;
-			return { x, y: down };
-		case "left":
-			let left = x - 1;
-			return { x: left, y };
-		case "right":
-			let right = x + 1;
-			return { x: right, y };
-		default:
-			return r;
-	}
-}
 
-function checkOutsideOrNot(r, s) {
-	if (r.x >= s || r.y >= s) {
-		return true
-	} else if (r.x <= -1 || r.y <= -1) {
-		return true
-	} else {
-		return false
-	}
-}
+
 
 // ! HOUSE REDUCER---------------------------------------
 function houseReducer(state = {}, action) {
