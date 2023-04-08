@@ -423,7 +423,10 @@ function mapForAction(e) {
 		newPosition('house');
 		newPosition('wolves');
 		newPosition('barriers');
-	} else if (['left', 'right', 'up', 'down'].includes(e.target.value)) {
+	} else if (
+		['left', 'right', 'up', 'down'].includes(e.target.value) &&
+		!!getElementWithId('rabbit')
+	) {
 		// --------------------------------
 		//changing values 
 		dispatch('rabbit', rabbitStep(e.target.value))
