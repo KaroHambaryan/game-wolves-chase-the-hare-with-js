@@ -543,6 +543,15 @@ function theFeatureStep(r, t) {
 	}
 }
 
+function checkOutsideOrNot(r, s) {
+	if (r.x >= s || r.y >= s) {
+		return true
+	} else if (r.x <= -1 || r.y <= -1) {
+		return true
+	} else {
+		return false
+	}
+}
 
 // ! HOUSE REDUCER---------------------------------------
 function houseReducer(state = {}, action) {
