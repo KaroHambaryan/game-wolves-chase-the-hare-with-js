@@ -70,9 +70,6 @@ const root = getElementWithId('root');
 render(root, app());
 
 //! APLICATION
-
-// !GAMESTATUS
-
 // app component
 function app() {
 	const elem = compose(addClass('app-flx_cen_wrap'), addChild(gameground()), create);
@@ -260,7 +257,7 @@ function logicRender(a, b) {
 }
 
 // ----------------------- Dynamic part of the application -----------------
-// ! CREATE GAME STORE--------------------------------------------
+// !  GAME STORE
 const store = new Map();
 
 // initial state values
@@ -277,30 +274,28 @@ const getStoreData = x => {
 };
 
 // dispatch for set data
-function dispatch(n, fn) {
+const dispatch = curry((n, fn) => {
 	if (n === 'rabbit') {
-
 		store.set('rabbit', rabbitReducer(store.get('rabbit'), fn));
 
 	} else if (n === 'house') {
-
 		store.set('house', houseReducer(store.get('house'), fn));
 
 	} else if (n === 'wolves') {
-
 		store.set('wolves', wolvesReducer(store.get('wolves'), fn));
 
 	} else if (n === 'barriers') {
-
 		store.set('barriers', barrierReducer(store.get('barriers'), fn));
-		barrierReducer
-	} else if (n === 'boardSize') {
 
+	} else if (n === 'boardSize') {
 		store.set('boardSize', boardSizeReduser(store.get('boardSize'), fn));
 
 	}
-}
-//! ----------------------------------------------
+
+});
+//! END
+
+// ----- DOM MANIPULATIN ---------
 // Create CSS Coordinates
 const convertToCSS = o => {
 	let s = 40;
@@ -342,6 +337,26 @@ const deleteAllChildes = p => {
 	return p;
 };
 
+// Change Бoard
+const changeBoard = curry((id, r, p = []) => {
+	const e = compose(
+		addChild([
+			...createCell(r),
+			...p
+		]),
+		deleteAllChildes,
+		getElementWithId
+	)
+	e(id);
+});
+
+// Add Participants
+const addParticipants = curry((wn, bn, s) => {
+	const w = getStoreData(wn);
+	const b = getStoreData(bn);
+	changeBoard('board', s, participants(w, b));
+});
+// END
 
 // ----- RANDOM COORDINATES FEATURES ----------
 // create Random Coordinates
@@ -390,60 +405,156 @@ const sortCoords = a => {
 
 // Create Random Coordinates
 const createCoords = compose(sortCoords, randomCoords);
-
+// END
 
 // ----- RABBIT FEATURES ----------
 // Create Feature Step
 const createFeatureStep = curry((r, t) => {
-		let x = r.x;
-		let y = r.y;
-		switch (t) {
-			case "up":
-				let up = y - 1;
-				return { x, y: up };
-			case "down":
-				let down = y + 1;
-				return { x, y: down };
-			case "left":
-				let left = x - 1;
-				return { x: left, y };
-			case "right":
-				let right = x + 1;
-				return { x: right, y };
-			default:
-				return r;
-		}
+	let x = r.x;
+	let y = r.y;
+	switch (t) {
+		case "up":
+			let up = y - 1;
+			return { x, y: up };
+		case "down":
+			let down = y + 1;
+			return { x, y: down };
+		case "left":
+			let left = x - 1;
+			return { x: left, y };
+		case "right":
+			let right = x + 1;
+			return { x: right, y };
+		default:
+			return r;
+	}
 });
 
 // Check Outside From The Board or Not and Return Next Position
 const getNextStep = r => {
 	const SIZE = getStoreData('boardSize');
 	if (r.y <= -1) {
-		return { ...r, y: r.y + SIZE};
+		return { ...r, y: r.y + SIZE };
 	} else if (r.y >= SIZE) {
-		return { ...r, y: r.y - SIZE};
-	}else if (r.x <= -1) {
-		return { ...r, x: r.x + SIZE};
+		return { ...r, y: r.y - SIZE };
+	} else if (r.x <= -1) {
+		return { ...r, x: r.x + SIZE };
 	} else if (r.x >= SIZE) {
 		return { ...r, x: r.x - SIZE };
 	} else {
 		return r;
 	}
-}
+};
 
 // Check for Barrier
 const ifBarrier = r => {
 	const b = getStoreData('barriers');
 	return b.some(e => e.x === r.x && e.y === r.y);
-}
+};
 
 // compose Fn for checking for Barrier
-const ifOnBarrier = compose(ifBarrier,getNextStep,createFeatureStep);
+const ifOnBarrier = compose(ifBarrier, getNextStep, createFeatureStep);
 
 // Compose Fn for checking rabbit is outside from board or not 
 // and for creating next step
-const createStep = compose(getNextStep,createFeatureStep)
+const createStep = compose(getNextStep, createFeatureStep);
+//  END
 
+// ----- WOLVES FEATURES ----------
+
+// create matrix with new {g,x,y} data
+/*
+Depending on the coordinates of the rabbit,
+new data is created with coordinates {g , x ,y }, 
+where g is the offset relative to the coordinates of the rabbit
+*/
+const createMatrix = r => {
+	const SIZE = getStoreData('boardSize');
+	const m = [];
+	for (let i = 0; i < SIZE; i++) {
+		const c = [];
+		for (let j = 0; j < SIZE; j++) {
+			let gx = Math.pow(Math.abs(r.x - i), 2);
+			let gy = Math.pow(Math.abs(r.y - j), 2);
+			let g = gx + gy
+			let x = i;
+			let y = j;
+			const e = { g, x, y };
+
+			c.push(e);
+		}
+		m.push(c);
+	}
+	return m.flat();
+};
+//  get array with closed list and matrix 
+//  and remove matches then next return new data
+const removeMatches = curry((a, m) => {
+	const n = [];
+	for (let i = 0; i < m.length; i++) {
+		let p = a.some((e) => (e.x === m[i].x) && (e.y === m[i].y));
+		if (!p) {
+			n.push(m[i]);
+		}
+	}
+
+	return n;
+});
+
+//  get array with closed list and matrix 
+//  then return matches
+const returnМatches = curry((m,a) => {
+	const n = [];
+	for (let i = 0; i < m.length; i++) {
+		let p = a.some((e) => (e.x === m[i].x) && (e.y === m[i].y));
+		if (p) {
+			n.push(m[i]);
+		}
+	}
+	return n;
+});
+
+// get current wolf data and giv us array with 4 possible step options
+const createAdjacentCoordinates = w => {
+	const SIZE = getStoreData('boardSize');
+	const n = [];
+	if (w.y > 0) {
+		n.push({ ...w, y: w.y - 1 });
+	}
+	if (w.y < SIZE - 1) {
+		n.push({ ...w, y: w.y + 1 });
+	}
+	if (w.x < SIZE - 1) {
+		n.push({ ...w, x: w.x + 1 });
+	}
+	if (w.x > 0) {
+		n.push({ ...w, x: w.x - 1 });
+	}
+	return n;
+};
+
+// get wolf's adjacent coodinates and return min value from that
+const getMinCoords = w => {
+	let gs = new Set();
+	for (let i = 0; i < w.length; i++) {
+		gs.add(w[i].g);
+	}
+	let n = Math.min(...gs);
+	return w.filter((e)=> e.g === n)[0];
+}
+
+// create next step for one wolf
+const wolfNextStep = curry((start, end, cloze_list) => {
+	 // get end -> return matrix
+	const matrix = compose(removeMatches(cloze_list), createMatrix);
+	// get start
+	const neighbor = compose(returnМatches(matrix(end)), createAdjacentCoordinates);
+	// get short Cut
+	const shortCut = compose(getMinCoords, neighbor);
+	return shortCut(start);
+});
+
+//  END
 
 // ! EVENT DEVELOPMENT BLOCK
 // get game area
@@ -452,7 +563,7 @@ const game = document.getElementById('game');
 // get select button
 const select = document.getElementById('select');
 
-//!CAME CLICK LISTENER 
+// CAME CLICK LISTENER 
 game.addEventListener('click', mapForAction);
 // The Map of all the Activities We Need on Click
 function mapForAction(e) {
@@ -482,10 +593,15 @@ function mapForAction(e) {
 	) {
 		// Global Variables
 		// --------------------------
-		const RABBIT = getStoreData('rabbit');
 		const EVENT = e.target.value;
+		const RABBIT = getStoreData('rabbit');
+		const WOLVES = getStoreData('wolves');
+		const BARRIERS = getStoreData('barriers');
+		const HOUSE = getStoreData('house');
+
 		const аllowStep = ifOnBarrier(RABBIT, EVENT);
 		// --------------------------------
+
 		//changing values 
 		if (!аllowStep) {
 			// changing
@@ -493,19 +609,22 @@ function mapForAction(e) {
 			// rendering
 			newPosition('rabbit');
 		}
-			
 		// -------------------------------
 		// changed values
+		const ARR = [...BARRIERS,HOUSE]
+		const newMatrix = compose(removeMatches,createMatrix)
 
+			console.log(wolfNextStep(WOLVES[0],RABBIT,ARR));
+			console.log(ARR);
 		//-------------------------------
 		// rendering new elements
 	}
 	e.stopPropagation();
 }
+// END
 
 
-
-// ! SELECT CHANGE LISTENER
+//  SELECT CHANGE LISTENER
 select.addEventListener('change', change);
 // All Actions We Need on Change
 function change(e) {
@@ -521,10 +640,11 @@ function change(e) {
 	// rendering new elements
 	e.stopPropagation();
 }
+// END
+//! END
 
 
-
-// ! BOARD SIZE ---------------------------
+// ! BOARD SIZE
 function boardSizeReduser(state = {}, action) {
 	if (action.type === 'keep_size') {
 		return action.payload.data;
@@ -540,11 +660,11 @@ function keepSize(data) {
 		}
 	}
 }
-// !---------------------------------------
+// ! END
 
 
 
-// !RABBIT REDUCER--------------------------
+// !RABBIT REDUCER
 function rabbitReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
 	const TYPE = action.type;
@@ -554,13 +674,13 @@ function rabbitReducer(state = {}, action) {
 			const [r] = PAYLOAD.data.r
 			return { x: r.x, y: r.y };
 		case 'up':
-			return createStep(state,TYPE);
+			return createStep(state, TYPE);
 		case 'down':
-			return createStep(state,TYPE);
+			return createStep(state, TYPE);
 		case 'left':
-			return createStep(state,TYPE);
+			return createStep(state, TYPE);
 		case 'right':
-			return createStep(state,TYPE);
+			return createStep(state, TYPE);
 		default:
 			return state;
 	}
@@ -585,11 +705,10 @@ function randomPosition(data) {
 		}
 	}
 }
-// !---------------------------------------
+// ! END
 
 
-
-// ! HOUSE REDUCER---------------------------------------
+// ! HOUSE REDUCER
 function houseReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
 	switch (action.type) {
@@ -600,14 +719,13 @@ function houseReducer(state = {}, action) {
 			return state
 	}
 }
-//House Action Creators
+// ! END
 
-// !--------------------------------------------
-// ----- HOUSE FEATURES ----------
 
-// ! WOLVES REDUCER---------------------------------------
+// ! WOLVES REDUCER
 function wolvesReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
+
 	switch (action.type) {
 		case 'random_coords':
 			const w = PAYLOAD.data.w
@@ -624,10 +742,10 @@ function logAction(val) {
 		type: val,
 	}
 }
-// !--------------------------------------------
-// ----- WOLVES FEATURES ----------
+// ! END
 
-// ! BARRIER REDUCER---------------------------------------
+
+// ! BARRIER REDUCER
 function barrierReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
 	switch (action.type) {
@@ -640,37 +758,14 @@ function barrierReducer(state = {}, action) {
 			return state
 	}
 }
-//Barrier Action Creators
-
-// !--------------------------------------------
-// ----- Barrier FEATURES ----------
-
-
+// ! END
 
 
 //! GENERAL PURPOSE FUNCTIONS FOR RENDERING
 
-// Changing Board size
-function changeBoard(id, s, c) {
-	const b = curry((id, r, p = []) => {
-		const e = compose(
-			addChild([
-				...createCell(r),
-				...p
-			]),
-			deleteAllChildes,
-			getElementWithId
-		)
-		e(id);
-	});
-	b(id, s, c);
-}
 
-function addParticipants(wn, bn, s) {
-	const w = getStoreData(wn);
-	const b = getStoreData(bn);
-	changeBoard('board', s, participants(w, b));
-}
+
+
 
 // function changeParticipantsDisplay(n) {
 // 	const rabbit = compose(addClass(n), getElementWithId);
