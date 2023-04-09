@@ -99,7 +99,6 @@ function selectSize() {
 		addChild(
 			addOptions()
 		),
-		addAttribute('id', 'select'),
 		create
 	);
 	return elem('select')
@@ -255,6 +254,35 @@ function logicRender(a, b) {
 	})
 	return el(a, b)
 }
+
+// VICTORY or LOSS
+const info = getElementWithId('info')
+render(info, wrapper());
+
+function wrapper() {
+	const el = compose(
+		addChild([
+			selectSize(),
+			startButton(),
+			viktory()
+		]),
+		addClass('i_wrp'),
+		create
+	);
+	return el('div')
+}
+
+function viktory() {
+	const el = compose(
+		addClass('v_sze'),
+		create
+	);
+	return el('div');
+}
+
+
+
+// END
 
 // ----------------------- Dynamic part of the application -----------------
 // !  GAME STORE
@@ -503,7 +531,7 @@ const removeMatches = curry((a, m) => {
 
 //  get array with closed list and matrix 
 //  then return matches
-const returnМatches = curry((m,a) => {
+const returnМatches = curry((m, a) => {
 	const n = [];
 	for (let i = 0; i < m.length; i++) {
 		let p = a.some((e) => (e.x === m[i].x) && (e.y === m[i].y));
@@ -540,12 +568,12 @@ const getMinCoords = w => {
 		gs.add(w[i].g);
 	}
 	let n = Math.min(...gs);
-	return w.filter((e)=> e.g === n)[0];
+	return w.filter((e) => e.g === n)[0];
 }
 
 // create next step for one wolf
 const wolfNextStep = curry((start, end, cloze_list) => {
-	 // get end -> return matrix
+	// get end -> return matrix
 	const matrix = compose(removeMatches(cloze_list), createMatrix);
 	// get start
 	const neighbor = compose(returnМatches(matrix(end)), createAdjacentCoordinates);
@@ -571,18 +599,36 @@ const wolvesNextStep = () => {
 	}
 	return NW;
 };
-
 //  END
 
-// ! EVENT DEVELOPMENT BLOCK
-// get game area
-const game = document.getElementById('game');
+// VICTORY or LOSS
+function checkVictory() {
+	const R = getStoreData('rabbit');
+	const W = getStoreData('wolves');
+	const H = getStoreData('house');
+	const X = [...W].some(e => (e.x === R.x) && (e.y === R.y));
+	const Y = (H.x === R.x) && (H.y === R.y);
+	if (X) {
+		info.classList.remove('d_none');
+		info.classList.add('i_sze');
+		const I = getElemsWitCLass('v_sze')[0];
+		I.textContent = 'LOSS';
+	} else if (Y) {
+		info.classList.remove('d_none');
+		info.classList.add('i_sze');
+		const I = getElemsWitCLass('v_sze')[0];
+		I.textContent = 'WIN';
+	}
+}
 
-// get select button
-const select = document.getElementById('select');
+// END
+
+// ! EVENT DEVELOPMENT BLOCK
+// get body
+const body = document.body;
 
 // CAME CLICK LISTENER 
-game.addEventListener('click', mapForAction);
+body.addEventListener('click', mapForAction);
 // The Map of all the Activities We Need on Click
 function mapForAction(e) {
 	if (e.target.value === 'start') {
@@ -596,7 +642,8 @@ function mapForAction(e) {
 		dispatch('barriers', randomPosition(RANDOM_COORDS));
 		// -------------------------------
 		// changed values
-
+		info.classList.remove('i_sze');
+		info.classList.add('d_none');
 
 		//-------------------------------
 		// rendering new elements
@@ -616,21 +663,18 @@ function mapForAction(e) {
 
 		const аllowStep = ifOnBarrier(RABBIT, EVENT);
 		// --------------------------------
-
 		//changing values 
 		if (!аllowStep) {
 			// changing
 			dispatch('rabbit', rabbitStep(EVENT));
-			dispatch('wolves', nextStep())
+			checkVictory()
+			// changed
+			dispatch('wolves', nextStep());
+			checkVictory()
 			// rendering
 			newPosition('rabbit');
 			newPosition('wolves');
 		}
-		// -------------------------------
-		// changed values
-			
-		//-------------------------------
-		// rendering new elements
 	}
 	e.stopPropagation();
 }
@@ -638,7 +682,7 @@ function mapForAction(e) {
 
 
 //  SELECT CHANGE LISTENER
-select.addEventListener('change', change);
+body.addEventListener('change', change);
 // All Actions We Need on Change
 function change(e) {
 	// --------------------------------
@@ -738,7 +782,7 @@ function houseReducer(state = {}, action) {
 // ! WOLVES REDUCER
 function wolvesReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
-	
+
 	switch (action.type) {
 		case 'random_coords':
 			const w = PAYLOAD.data.w
@@ -783,20 +827,3 @@ function barrierReducer(state = {}, action) {
 	}
 }
 // ! END
-
-
-
-
-
-
-// function changeParticipantsDisplay(n) {
-// 	const rabbit = compose(addClass(n), getElementWithId);
-// 	const house = compose(addClass(n), getElementWithId);
-// 	const wolves = compose(addClases(n), getElemsWitCLass);
-// 	const barriers = compose(addClases(n), getElemsWitCLass);
-// 	rabbit('rabbit');
-// 	house('house');
-// 	wolves('wolves');
-// 	barriers('barriers');
-// }
-
