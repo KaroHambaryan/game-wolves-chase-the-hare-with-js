@@ -554,6 +554,24 @@ const wolfNextStep = curry((start, end, cloze_list) => {
 	return shortCut(start);
 });
 
+// create next step all wolves
+const wolvesNextStep = () => {
+	const RABBIT = getStoreData('rabbit');
+	const WOLVES = [...getStoreData('wolves')];
+	const BARRIERS = getStoreData('barriers');
+	const HOUSE = getStoreData('house');
+	const LIST = [...BARRIERS, HOUSE];
+	const NW = [];
+	let i = 0;
+	while (WOLVES.length) {
+		const s = WOLVES.shift();
+		NW.push(wolfNextStep(s, RABBIT, LIST));
+		LIST.push(NW[i]);
+		i++;
+	}
+	return NW;
+};
+
 //  END
 
 // ! EVENT DEVELOPMENT BLOCK
@@ -595,9 +613,6 @@ function mapForAction(e) {
 		// --------------------------
 		const EVENT = e.target.value;
 		const RABBIT = getStoreData('rabbit');
-		const WOLVES = getStoreData('wolves');
-		const BARRIERS = getStoreData('barriers');
-		const HOUSE = getStoreData('house');
 
 		const аllowStep = ifOnBarrier(RABBIT, EVENT);
 		// --------------------------------
@@ -606,16 +621,14 @@ function mapForAction(e) {
 		if (!аllowStep) {
 			// changing
 			dispatch('rabbit', rabbitStep(EVENT));
+			dispatch('wolves', nextStep())
 			// rendering
 			newPosition('rabbit');
+			newPosition('wolves');
 		}
 		// -------------------------------
 		// changed values
-		const ARR = [...BARRIERS,HOUSE]
-		const newMatrix = compose(removeMatches,createMatrix)
-
-			console.log(wolfNextStep(WOLVES[0],RABBIT,ARR));
-			console.log(ARR);
+			
 		//-------------------------------
 		// rendering new elements
 	}
@@ -725,13 +738,17 @@ function houseReducer(state = {}, action) {
 // ! WOLVES REDUCER
 function wolvesReducer(state = {}, action) {
 	const PAYLOAD = action.payload;
-
+	
 	switch (action.type) {
 		case 'random_coords':
 			const w = PAYLOAD.data.w
 			return w.map((e) => {
 				return { x: e.x, y: e.y };
 			})
+		case 'next_step':
+			return wolvesNextStep().map((e) => {
+				return e;
+			});
 		default:
 			return state
 	}
@@ -740,6 +757,13 @@ function wolvesReducer(state = {}, action) {
 function logAction(val) {
 	return {
 		type: val,
+	}
+}
+
+// Wolves Next Step
+function nextStep() {
+	return {
+		type: 'next_step',
 	}
 }
 // ! END
@@ -760,8 +784,6 @@ function barrierReducer(state = {}, action) {
 }
 // ! END
 
-
-//! GENERAL PURPOSE FUNCTIONS FOR RENDERING
 
 
 
